@@ -1,3 +1,3 @@
-# PWA_dynamic_manifest
-A sample PWA showing dynamic manifest generation
-# PWA-project
+# PWA-project. 
+
+The goal of this PWA is to track users by giving them an unique ID. 
