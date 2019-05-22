@@ -1,28 +1,88 @@
-const express = require ('express');
-const app = express ();
+var express = require('express');
+var uuidv4 = require('uuid/v4');
+var fs = require('fs');
+var hbs = require('hbs');
+var app = express ();
+var dict = {};
 app.set ('view engine', 'hbs');
-app.use (express.static (__dirname + '/public'));
+app.use (express.static(__dirname + '/public'));
+
+var id = uuidv4();
+var trackID = '?id=' + id; 
+
+var obj = {
+  "name": "PWA for tracking users",
+  "short_name": "Tracking users",
+  "description": "PWA that demonstrates user tracking",
+  "icons": [
+      {
+      "src": "../public/images/jslogo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+      },
+      {
+      "src": "../public/images/jslogo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+      }
+  ],
+  "start_url": trackID,
+  "display": "standalone",
+  "background_color": "#f0db4f",
+  "theme_color": "#FFC0CB"
+};
+
+app.get ('/', (req, res) => {
+  fs.exists('public/manifest.json', function(exists){
+    if(exists){
+        console.log("file exists");
+        fs.readFile('public/manifest.json', err => {
+          if (err) {
+              console.log('Error writing file', err)
+          } else {
+              console.log('Successfully wrote file')
+          }});  
+        } 
+        else {
+        var json = JSON.stringify(obj); 
+        fs.writeFile('public/manifest.json', json, 'utf8', err => {
+          if (err) {
+              console.log('Error writing file', err)
+          } else {
+              console.log('Successfully wrote file')
+          }
+        });
+    } 
+    });
+
+  var id = req.query.id;
+  if(dict[id]){ // hvis brukeren finnes
+    dict[id]++;
+  }else{
+    dict[id]=1
+  }
+  console.log(dict)
+  res.render('index.hbs', {trackID: req.params.trackID});
+})
 
 app.get ('/manifest.json', (req, res) => {
-  // You can dynamically generate your manifest here
-  // You can pull the data from database and send it back
-  // I will use a template for simplicity
-
-  //Use some logic to extract organization name from referer
   var matches = /\/([a-z]+)\/?$/i.exec (req.headers.referer);
   if (matches && matches.length > 1) {
-    var orgName = matches[1];
+    var trackID = matches[1];
   } else {
-    var orgName = 'ORGA'; //Default
+    var id = uuidv4();
+    var trackID = '?id=' + id; //Default
   }
-
   // Need to set content type, default is text/html
   res.set ('Content-Type', 'application/json');
-  res.render ('manifest.hbs', {orgName});
+  res.render ('manifest.hbs', {trackID});
+  //setTimeout(1000);
+  //res.redirect('/');
 });
 
-app.get ('/:orgName', (req, res) => {
-  res.render ('index.hbs', {orgName: req.params.orgName});
+app.get ('/:trackID', (req, res) => {
+  res.render ('index.hbs');
 });
 
-app.listen (3000, () => console.log ('Whitelist  app listening on port 3000!'));
+app.listen(3000, function()
+{console.log("server listening")})
