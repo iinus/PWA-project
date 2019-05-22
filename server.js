@@ -1,11 +1,10 @@
 var express = require('express');
 var uuidv4 = require('uuid/v4');
-var fs = require('fs');
-var hbs = require('hbs');
+
 var app = express ();
 var dict = {};
 app.set ('view engine', 'hbs');
-app.use (express.static(__dirname + '/public/app.js'));
+//app.use (express.static(__dirname + '/public/main.js'));
 
 var id = uuidv4();
 const trackID = id; 
@@ -33,41 +32,19 @@ var manifest = {
 };
 
 app.get ('/', (req, res) => {
-  fs.exists('public/manifest.json', function(exists){
-    if(exists){
-        console.log("file exists");
-        fs.readFile('public/manifest.json', err => {
-          if (err) {
-              console.log('Error writing file', err)
-          } else {
-              console.log('Successfully wrote file')
-          }});  
-        } 
-        else {
-        var json = JSON.stringify(manifest); 
-        fs.writeFile('public/manifest.json', json, 'utf8', err => {
-          if (err) {
-              console.log('Error writing file', err)
-          } else {
-              console.log('Successfully wrote file')
-          }
-        });
-    } 
-    });
-
   var id = req.query.id;
+  console.log(dict[id]);
   if(dict[id]){ // hvis brukeren finnes
     dict[id]++;
   }else{
     dict[id]=1
   }
-
   console.log(dict)
-  res.render('index.hbs', {trackID: trackID});
-})
+  res.render ('index.hbs', {trackID: trackID, stats: dict[trackID]});
+});
 
 app.get (':?id=' + trackID, (req, res) => {
-  res.render ('index.hbs', {trackID: trackID});
+  res.redirect ('/');
 });
 
 app.get("/manifest.json", (req, res) => {
@@ -83,6 +60,48 @@ app.get("/app.js", (req, res) => {
       .register ('/sw.js')
       .then (registration => console.log ('Service worker registration successful!' + registration.scope));
   }
+  `)
+})
+
+app.get("/main.js", (req, res) => {
+  res.append("Content-Type", "text/javascript; charset=utf-8")
+  res.send(`
+  Notification.requestPermission(function(status) {
+    console.log('Notification permission status:', status);
+});
+
+let deferredPrompt;
+
+var btnAdd = document.createElement("button");
+btnAdd.style.display = 'none';
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent Chrome 67 and earlier from automatically showing the prompt
+  e.preventDefault();
+  // Stash the event so it can be triggered later.
+  deferredPrompt = e;
+});
+
+btnAdd.addEventListener('click', (e) => {
+    // hide our user interface that shows our A2HS button
+    btnAdd.style.display = 'none';
+    // Show the prompt
+    deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    deferredPrompt.userChoice
+    .then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the A2HS prompt');
+        } else {
+        console.log('User dismissed the A2HS prompt');
+        }
+        deferredPrompt = null;
+    });
+});
+
+window.addEventListener('appinstalled', (evt) => {
+  app.logEvent('a2hs', 'installed');
+});
   `)
 })
 
@@ -102,9 +121,6 @@ app.get("/sw.js", (req, res) => {
       })
     );
   });
-  
-  //':/?id=' + '{{trackID}}'
-  //console.log("trackid" + {{trackID}});
   
   self.addEventListener('activate', function (event) {
     console.log('ServiceWorker: Activate');
