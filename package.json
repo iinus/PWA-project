@@ -12,6 +12,7 @@
     "express": "^4.17.0",
     "fs": "0.0.1-security",
     "hbs": "^4.0.4",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "xmlhttprequest": "^1.8.0"
   }
 }
