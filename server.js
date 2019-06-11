@@ -1,11 +1,8 @@
 var express = require('express');
 var uuidv4 = require('uuid/v4');
-
 var app = express ();
 var dict = {};
 app.set ('view engine', 'hbs');
-//app.use (express.static(__dirname + '/public/main.js'));
-
 var id = uuidv4();
 const trackID = id; 
 
@@ -43,13 +40,17 @@ app.get ('/', (req, res) => {
   res.render ('index.hbs', {trackID: trackID, stats: dict[trackID]});
 });
 
-app.get (':?id=' + trackID, (req, res) => {
+app.get('?id=' + trackID, (req, res) => {
   res.redirect ('/');
 });
 
 app.get("/manifest.json", (req, res) => {
   res.append("Content-Type", "text/json; charset=utf-8")
   res.send(JSON.stringify(manifest))
+})
+
+app.get("/jslogo.png", (req,res) =>{
+  res.attachment('/public/images/jslogo.png')
 })
 
 app.get("/app.js", (req, res) => {
@@ -152,8 +153,8 @@ app.get("/sw.js", (req, res) => {
     const title = 'Push notification';
     const options = {
       body: 'Yay it works.',
-      icon: 'images/jslogo.png',
-      badge: 'images/jslogo.png'
+      icon: '/images/jslogo.png',
+      badge: '/images/jslogo.png'
     };
   
     event.waitUntil(self.registration.showNotification(title, options));
